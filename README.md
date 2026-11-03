@@ -1,10 +1,13 @@
 # BigDataGroupProject
 
-##Part 1
+## Part 1
+
 Versions: Spark 4.3.0, Kafka 4.4.0, Python version.
+
 Data source: Hacker News API (https://github.com/HackerNews/API)
 
 (For Windows users, run in WSL)
+
 Install the Python packages:
 ```bash
 python -m venv gp1env
@@ -19,7 +22,7 @@ Use a separate terminal for each step. Activate the virtual environment in the
 Python/Spark terminals (`source gp1env/bin/activate`). Replace `<KAFKA_DIR>` with
 your Kafka folder.
 
-**1. Start the Kafka broker** (first time only: format storage)
+**1. Start Kafka broker** (first time only: format storage)
 
 ```bash
 cd <KAFKA_DIR>
@@ -28,7 +31,7 @@ bin/kafka-storage.sh format --standalone -t $KAFKA_CLUSTER_ID -c config/server.p
 bin/kafka-server-start.sh config/server.properties
 ```
 
-**2. Create the topics** (once)
+**2. Create topics** (once)
 
 ```bash
 cd <KAFKA_DIR>
@@ -36,14 +39,14 @@ bin/kafka-topics.sh --create --topic topic1 --bootstrap-server localhost:9092
 bin/kafka-topics.sh --create --topic topic2 --bootstrap-server localhost:9092
 ```
 
-**3. Start the producer**
+**3. Start producer**
 
 ```bash
 python Project1_Part1.py --bootstrap localhost:9092 --topic topic1 \
   --poll-seconds 10 --backup-file <PATH_TO_SAVE_MESSAGES>.txt
 ```
 
-**4. Start the Spark job**
+**4. Start Spark job**
 
 ```bash
 export PYSPARK_PYTHON=$(which python)
@@ -52,12 +55,12 @@ spark-submit \
   Project1_Part1_spark.py --checkpoint <CHECKPOINT_DIR>
 ```
 
-**5. Check the output**
+**5. Check output**
 
 ```bash
 cd <KAFKA_DIR>
 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic topic2 --from-beginning
 ```
 
-You should see lines like `{"entity":"Google","count":7}` after the first trigger.
+There should be lines like `{"entity":"Google","count":7}` after the first trigger.
 Use `--topic topic1` to check the producer.
