@@ -1,3 +1,40 @@
+```
+docker-compose up -d
+```
+
+```
+python setup_kafka.py --bootstrap localhost:9092
+```
+
+```
+python producer.py --bootstrap localhost:9092 --topic topic1 --backup-file messages.txt```
+```
+
+```
+export PYSPARK_PYTHON=$(which python)
+spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.3.0 \
+  spark_ner_stream.py --bootstrap localhost:9092
+```
+to visualize the Data: Navigate to http://localhost:5601 in your browser. Use Kibana to build a bar chart visualization of the top 10 named entities fed by Logstash from topic2.
+
+```
+export PYSPARK_PYTHON=$(which python)
+    spark-submit spark_ml_train.py --data-path path/to/ag_news.parquet --model-path /tmp/mllib_model
+```
+
+```terminal
+export PYSPARK_PYTHON=$(which python)
+spark-submit spark_ml_predict.py --mode batch --model-path /tmp/mllib_model --file-path messages.txt
+```
+
+```commandline
+export PYSPARK_PYTHON=$(which python)
+spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.3.0 \
+  spark_ml_predict.py --mode stream --bootstrap localhost:9092 --model-path /tmp/mllib_model
+```
+
+I will fix formatting later
+------------
 # BigDataGroupProject
 
 ## Part 1
