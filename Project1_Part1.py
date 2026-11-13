@@ -3,7 +3,7 @@ import requests
 from kafka import KafkaProducer
 import html
 
-BASE = "https://hacker-news.firebaseio.com/v0"
+HACKERNEWS = "https://hacker-news.firebaseio.com/v0"
 
 def clean(raw):
     text = re.sub(r"<[^>]+>", " ", raw or "")   # remove tags
@@ -27,12 +27,12 @@ def main():
         bootstrap_servers=args.bootstrap,
         value_serializer=lambda v: v.encode("utf-8"),
     )
-    last_id = get_json(f"{BASE}/maxitem.json")
+    last_id = get_json(f"{HACKERNEWS}/maxitem.json")
 
     while True:
-        current = get_json(f"{BASE}/maxitem.json")
+        current = get_json(f"{HACKERNEWS}/maxitem.json")
         for item_id in range(last_id + 1, current + 1):
-            item = get_json(f"{BASE}/item/{item_id}.json")
+            item = get_json(f"{HACKERNEWS}/item/{item_id}.json")
             if not item or item.get("deleted") or item.get("dead"):
                 continue
             text = clean(item.get("title") or item.get("text"))
