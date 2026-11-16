@@ -1,39 +1,3 @@
-```
-docker-compose up -d
-```
-
-```
-python setup_kafka.py --bootstrap localhost:9092
-```
-
-```
-python producer.py --bootstrap localhost:9092 --topic topic1 --backup-file messages.txt```
-```
-
-```
-export PYSPARK_PYTHON=$(which python)
-spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.3.0 \
-  spark_ner_stream.py --bootstrap localhost:9092
-```
-to visualize the Data: Navigate to http://localhost:5601 in your browser. Use Kibana to build a bar chart visualization of the top 10 named entities fed by Logstash from topic2.
-
-```
-export PYSPARK_PYTHON=$(which python)
-    spark-submit spark_ml_train.py --data-path path/to/ag_news.parquet --model-path /tmp/mllib_model
-```
-
-```terminal
-export PYSPARK_PYTHON=$(which python)
-spark-submit spark_ml_predict.py --mode batch --model-path /tmp/mllib_model --file-path messages.txt
-```
-
-```commandline
-export PYSPARK_PYTHON=$(which python)
-spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.3.0 \
-  spark_ml_predict.py --mode stream --bootstrap localhost:9092 --model-path /tmp/mllib_model
-```
-
-I will fix formatting later
 ------------
 # BigDataGroupProject
 
@@ -45,13 +9,21 @@ Data source: Hacker News API (https://github.com/HackerNews/API)
 
 (For Windows users, run in WSL)
 
-Install the Python packages:
-```bash
-python -m venv gp1env
-source gp1env/bin/activate
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
+Set up Kafka:
 ```
+docker-compose up -d
+```
+
+```
+cd <KAFKA_DIR>
+source ~/gp1env/bin/activate
+python setup_kafka.py --bootstrap localhost:9092
+```
+
+```
+python producer.py --bootstrap localhost:9092 --topic topic1 --backup-file messages.txt```
+```
+
 
 #### How to run
 
@@ -92,7 +64,7 @@ spark-submit \
   Project1_Part1_spark.py --checkpoint <CHECKPOINT_DIR>
 ```
 
-**5. Check output**
+Check output:
 
 ```bash
 cd <KAFKA_DIR>
@@ -101,3 +73,63 @@ bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic topic2 -
 
 There should be lines like `{"entity":"Google","count":7}` after the first trigger.
 Use `--topic topic1` to check the producer.
+
+**5. DOWNLOAD AND START ELASTICSEARCH, KIBANA, AND LOGSTASH**
+```bash
+wget <download link>
+```
+
+```bash
+cd ~/elasticsearch-9.5.6
+bin/elasticsearch
+```
+Make sure to disable security (add lines to end of file):
+```bash
+nano ~/elasticsearch-9.5.6/config/elasticsearch.yml
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+```
+
+```bash
+cd ~/kibana-9.5.6 && bin/kibana
+```
+
+```bash
+cd ~/logstash-9.5.6 && bin/logstash -f ~/gp1/topic2.conf
+```
+
+to visualize the Data: Navigate to http://localhost:5601 in your browser. Use Kibana to build a bar chart visualization of the top 10 named entities fed by Logstash from topic2.
+
+## Part 2
+
+**1. Start Train Model**
+
+```bash
+export PYSPARK_PYTHON=$(which python)
+spark-submit train_model.py \
+  --agnews-path ~/gp1/data/train-00000-of-00001.parquet \
+  --model-path ~/gp1/models/agnews_lr --eval
+```
+
+**2. Activate pipeLineTwo**
+
+```bash
+spark-submit pipeLineTwo.py \
+  --model-path ~/gp1/models/agnews_lr \
+  --input-path ~/gp1/messages_clean.txt \
+  --output-dir ~/gp1/outputs
+```
+
+**3. Compare hand picked labels with model**
+
+```bash
+python ~/gp1/compare_labels.py --file ~/gp1/outputs/hand_labels.csv
+```
+
+**4. Start Batches**
+
+```bash
+spark-submit \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.3.0 \
+  pipeLineOne.py --checkpoint ~/gp1/ckpt_p2 --model-path ~/gp1/models/agnews_lr
+```
